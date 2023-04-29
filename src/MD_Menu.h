@@ -370,6 +370,21 @@ public:
   };
 
   /**
+  * Prototype for the type of request that is handled
+  * 
+  * Formerly this was just a bool but that meant realtime feedback always ended up saving the
+  * current value since it was indistinguishable from a normal "user confirmed save" call.
+  * The change is mostly backwards compatible since C++ also can take this enum as a bool.
+  * Only thing breaking is that realtime feedback requests have to be handled diferently now.
+  */
+  enum requestType_t
+  {
+    REQ_SET = 0,   ///< Value has been confirmed, it can be applied
+    REQ_GET = 1,   ///< Request for the value to be processed
+    REQ_FB = 2     ///< Realtime feedback, value is not confirmed yet
+  };
+
+  /**
   * Data input/output function prototype
   *
   * This user function must handle the get/set of the input value
@@ -378,7 +393,7 @@ public:
   * data identified by the ID. Return nullptr to stop the menu from
   * editing the value.
   */
-  typedef value_t*(*cbValueRequest)(mnuId_t id, bool bGet);
+  typedef value_t*(*cbValueRequest)(mnuId_t id, requestType_t reqType);
 
   /**
   * Input field definition

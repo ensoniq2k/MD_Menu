@@ -218,7 +218,7 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     }
     else
     {
-      _pValue = mInp->cbVR(mInp->id, true);
+      _pValue = mInp->cbVR(mInp->id, REQ_GET);
 
       if (_pValue == nullptr)
       {
@@ -272,7 +272,7 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
 
   case NAV_SEL:
     _pValue->value = _V.value;
-    mInp->cbVR(mInp->id, false);
+    mInp->cbVR(mInp->id, REQ_SET);
     endFlag = true;
     break;
 
@@ -296,7 +296,7 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, false);
+      mInp->cbVR(mInp->id, REQ_FB);
     }
   }
 
@@ -314,7 +314,7 @@ bool MD_Menu::processBool(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
   {
   case NAV_NULL:    // this is to initialize the CB_DISP
     {
-      _pValue = mInp->cbVR(mInp->id, true);
+      _pValue = mInp->cbVR(mInp->id, REQ_GET);
 
       if (_pValue == nullptr)
       {
@@ -337,7 +337,7 @@ bool MD_Menu::processBool(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
 
   case NAV_SEL:
     _pValue->value = _V.value;
-    mInp->cbVR(mInp->id, false);
+    mInp->cbVR(mInp->id, REQ_SET);
     endFlag = true;
     break;
 
@@ -360,7 +360,7 @@ bool MD_Menu::processBool(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, false);
+      mInp->cbVR(mInp->id, REQ_FB);
     }
   }
 
@@ -415,7 +415,7 @@ bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
   {
   case NAV_NULL:    // this is to initialize the CB_DISP
     {
-      _pValue = mInp->cbVR(mInp->id, true);
+      _pValue = mInp->cbVR(mInp->id, REQ_GET);
 
       if (_pValue == nullptr)
       {
@@ -448,7 +448,7 @@ bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
 
   case NAV_SEL:
     _pValue->value = _V.value;
-    mInp->cbVR(mInp->id, false);
+    mInp->cbVR(mInp->id, REQ_SET);
     endFlag = true;
     break;
 
@@ -471,7 +471,7 @@ bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, false);
+      mInp->cbVR(mInp->id, REQ_FB);
     }
   }
 
@@ -493,7 +493,7 @@ bool MD_Menu::processFloat(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uin
   {
   case NAV_NULL:    // this is to initialize the CB_DISP
   {
-    _pValue = mInp->cbVR(mInp->id, true);
+    _pValue = mInp->cbVR(mInp->id, REQ_GET);
 
     if (_pValue == nullptr)
     {
@@ -526,7 +526,7 @@ bool MD_Menu::processFloat(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uin
 
   case NAV_SEL:
     _pValue->value = _V.value;
-    mInp->cbVR(mInp->id, false);
+    mInp->cbVR(mInp->id, REQ_SET);
     endFlag = true;
     break;
 
@@ -557,7 +557,7 @@ bool MD_Menu::processFloat(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uin
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, false);
+      mInp->cbVR(mInp->id, REQ_FB);
     }
   }
 
@@ -579,7 +579,7 @@ bool MD_Menu::processEng(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
   {
   case NAV_NULL:    // this is to initialize the CB_DISP
   {
-    _pValue = mInp->cbVR(mInp->id, true);
+    _pValue = mInp->cbVR(mInp->id, REQ_GET);
 
     if (_pValue == nullptr)
     {
@@ -651,7 +651,7 @@ bool MD_Menu::processEng(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
   case NAV_SEL:
     _pValue->value = _V.value;
     _pValue->power = _V.power;
-    mInp->cbVR(mInp->id, false);
+    mInp->cbVR(mInp->id, REQ_SET);
     endFlag = true;
     break;
 
@@ -691,7 +691,7 @@ bool MD_Menu::processEng(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, false);
+      mInp->cbVR(mInp->id, REQ_FB);
     }
   }
 
@@ -705,11 +705,11 @@ bool MD_Menu::processRun(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
 {
   if (nav == NAV_NULL)    // initialize the CB_DISP
   {
-    _pValue = mInp->cbVR(mInp->id, true);
+    _pValue = mInp->cbVR(mInp->id, REQ_GET);
 
     if (_pValue == nullptr) // no confirmation required, just run user code
     {
-      mInp->cbVR(mInp->id, false);
+      mInp->cbVR(mInp->id, REQ_SET);
       return(true);
     }
     else   // confirmation required
@@ -723,7 +723,7 @@ bool MD_Menu::processRun(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
   }
   else if (nav == NAV_SEL)  // confirmation received
   {
-    mInp->cbVR(mInp->id, false);
+    mInp->cbVR(mInp->id, REQ_SET);
     return(true);
   }
 
@@ -741,7 +741,7 @@ bool MD_Menu::processExt(userNavAction_t nav, mnuInput_t* mInp, bool init, bool 
   {
   case NAV_NULL:    // this is to get the value from the user code
   {
-    _pValue = mInp->cbVR(mInp->id, true);
+    _pValue = mInp->cbVR(mInp->id, REQ_GET);
 
     if (_pValue == nullptr)
     {
@@ -762,7 +762,7 @@ bool MD_Menu::processExt(userNavAction_t nav, mnuInput_t* mInp, bool init, bool 
 
   case NAV_SEL:
     _pValue->value = _V.value;
-    mInp->cbVR(mInp->id, false);
+    mInp->cbVR(mInp->id, REQ_SET);
     endFlag = true;
     break;
 
@@ -785,7 +785,7 @@ bool MD_Menu::processExt(userNavAction_t nav, mnuInput_t* mInp, bool init, bool 
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, false);
+      mInp->cbVR(mInp->id, REQ_FB);
     }
   }
 
