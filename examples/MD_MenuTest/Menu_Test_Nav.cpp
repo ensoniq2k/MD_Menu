@@ -16,7 +16,9 @@ MD_Menu::userNavAction_t buttonNav = MD_Menu::NAV_NULL;
 void setupNav(void)
 {
   ButtonLeft.attachClick([] { buttonNav = MD_Menu::NAV_DEC; });
+  ButtonLeft.attachLongPressStart([] { buttonNav = MD_Menu::NAV_ESC; });
   ButtonRight.attachClick([] { buttonNav = MD_Menu::NAV_INC; });
+  ButtonRight.attachLongPressStart([] { buttonNav = MD_Menu::NAV_SEL; });
   ButtonEnter.attachClick([] { buttonNav = MD_Menu::NAV_SEL; });
   ButtonEscape.attachClick([] { buttonNav = MD_Menu::NAV_ESC; });
 }
