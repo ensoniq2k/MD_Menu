@@ -347,13 +347,14 @@ public:
   */
   enum inputAction_t
   {
-    INP_LIST,   ///< The item is for selection from a defined list of values
-    INP_BOOL,   ///< The item is for input of a boolean variable (Y/N)
-    INP_INT,    ///< The item is for input of an integer
-    INP_FLOAT,  ///< The item is for input of a real number representation with 2 decimal digits 
-    INP_ENGU,   ///< The item is for input of a number in engineering (powers of 10 which are multiples of 3) with 3 decimal digits.
-    INP_RUN,    ///< The item will run a user function
-    INP_EXT,    ///< The item will display numeric input provided by a user function
+    INP_LIST,     ///< The item is for selection from a defined list of values
+    INP_DYNLIST,  ///< The item is for selection from a defined list of values which is held in RAM and not read from PROGMEM
+    INP_BOOL,     ///< The item is for input of a boolean variable (Y/N)
+    INP_INT,      ///< The item is for input of an integer
+    INP_FLOAT,    ///< The item is for input of a real number representation with 2 decimal digits 
+    INP_ENGU,     ///< The item is for input of a number in engineering (powers of 10 which are multiples of 3) with 3 decimal digits.
+    INP_RUN,      ///< The item will run a user function
+    INP_EXT,      ///< The item will display numeric input provided by a user function
   };
 
   /**
@@ -617,10 +618,11 @@ public:
   *
   * Return the count of items in the selection list specified.
   *
-  * \param p Pointer to the selection list in PROGMEM.
+  * \param p Pointer to the selection list (in PROGMEM or RAM).
+  * \param fromProgmem Indicates if the list resides in PROGMEM or RAM.
   * \return the item count.
   */
-  listId_t getListCount(const char *p);
+  listId_t getListCount(const char *p, bool fromProgmem);
   
   /**
   * Extract an item from a selection list
@@ -628,13 +630,14 @@ public:
   * Return idx'th item from the list selection string. The first item is
   * numbered 0.
   *
-  * \param p      pointer to the selection list in PROGMEM.
+  * \param p      pointer to the selection list in PROGMEM (in PROGMEM or RAM).
   * \param idx    the zero based index of the required element.
   * \param buf    pointer to character buffer for the list item extracted.
   * \param bufLen char size of the buffer at *buf.
+  * \param fromProgmem Indicates if the list resides in PROGMEM or RAM.
   * \return the buf pointer.
   */
-  char *getListItem(const char *p, listId_t idx, char *buf, uint8_t bufLen);
+  char *getListItem(const char *p, listId_t idx, char *buf, uint8_t bufLen, bool fromProgmem);
 
   /** @} */
 
@@ -683,7 +686,7 @@ private:
 
   // Process the different types of input requests
   // All return true when edit changes are finished (SELECT or ESCAPE).
-  bool processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb);
+  bool processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, bool fromProgmem);
   bool processBool(userNavAction_t nav, mnuInput_t *mInp, bool rtfb);
   bool processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint16_t incDelta);
   bool processFloat(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint16_t incDelta);

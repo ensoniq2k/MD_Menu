@@ -113,7 +113,7 @@ MD_Menu::mnuInput_t* MD_Menu::loadInput(mnuId_t id)
   return(nullptr);
 }
 
-MD_Menu::listId_t MD_Menu::getListCount(const char *p)
+MD_Menu::listId_t MD_Menu::getListCount(const char *p, bool fromProgmem)
 // Return a count of the items in the list
 {
   listId_t count = 0;
@@ -121,11 +121,13 @@ MD_Menu::listId_t MD_Menu::getListCount(const char *p)
 
   if (p != nullptr)
   {
-    if (pgm_read_byte(p) != '\0')   // not empty list
+    c = fromProgmem ? pgm_read_byte(p) : *p;
+
+    if (c != '\0')   // not empty list
     {
       do
       {
-        c = pgm_read_byte(p++);
+        c = fromProgmem ? pgm_read_byte(p++) : *p++;
         if (c == LIST_SEPARATOR) count++;
       } while (c != '\0');
 
@@ -139,7 +141,7 @@ MD_Menu::listId_t MD_Menu::getListCount(const char *p)
   return(count);
 }
 
-char *MD_Menu::getListItem(const char *p, MD_Menu::listId_t idx, char *buf, uint8_t bufLen)
+char *MD_Menu::getListItem(const char *p, MD_Menu::listId_t idx, char *buf, uint8_t bufLen, bool fromProgmem)
 // Find the idx'th item in the list and return in fixed width, padded
 // with trailing spaces. 
 {
@@ -157,7 +159,7 @@ char *MD_Menu::getListItem(const char *p, MD_Menu::listId_t idx, char *buf, uint
     while (idx > 0)
     {
       do
-        c = pgm_read_byte(p++);
+        c = fromProgmem ? pgm_read_byte(p++) : *p++;
       while (c != '\0' && c != LIST_SEPARATOR);
       idx--;
     }
@@ -166,7 +168,7 @@ char *MD_Menu::getListItem(const char *p, MD_Menu::listId_t idx, char *buf, uint
     psz = buf;
     for (uint8_t i = 0; i < bufLen - 1; psz++, i++)
     {
-      *psz = pgm_read_byte(p++);
+      *psz = fromProgmem ? pgm_read_byte(p++) : *p++;
       if (*psz == LIST_SEPARATOR) *psz = '\0';
       if (*psz == '\0') break;
     }
@@ -198,7 +200,7 @@ void MD_Menu::strPostamble(char *psz, mnuInput_t *mInp)
   strcat(psz, FLD_DELIM_R);
 }
 
-bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
+bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, bool fromProgmem)
 // Processing for List based input
 // Return true when the edit cycle is completed
 {
@@ -209,7 +211,7 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
   {
   case NAV_NULL:    // this is to initialize the CB_DISP
   {
-    listId_t size = getListCount(mInp->pList);
+    listId_t size = getListCount(mInp->pList, fromProgmem);
 
     if (size == 0)
     {
@@ -238,7 +240,10 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
 
   case NAV_DEC:
     {
-      listId_t size = getListCount(mInp->pList);
+      listId_t size = getListCount(mInp->pList, fromProgmem);
+
+      MD_PRINTS("List Nav <-:\n")
+      MD_PRINT("Size: ", size)
 
       if (_V.value > 0)
       {
@@ -255,7 +260,10 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
 
   case NAV_INC:
     {
-      listId_t size = getListCount(mInp->pList);
+      listId_t size = getListCount(mInp->pList, fromProgmem);
+
+      MD_PRINTS("List Nav ->:\n")
+      MD_PRINT("Size: ", size)
 
       if (_V.value < size - 1)
       {
@@ -286,8 +294,11 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     char szItem[mInp->fieldWidth + 1];
     char sz[INP_PRE_SIZE(mInp) + sizeof(szItem) + INP_POST_SIZE(mInp) + 1];
 
+    MD_PRINTS("List update:\n")
+    MD_PRINT("Index: ", _V.value)
+
     strPreamble(sz, mInp);
-    strcat(sz, getListItem(mInp->pList, _V.value, szItem, sizeof(szItem)));
+    strcat(sz, getListItem(mInp->pList, _V.value, szItem, sizeof(szItem), fromProgmem));
     strPostamble(sz, mInp);
 
     _cbDisp(DISP_L1, sz);
@@ -814,13 +825,14 @@ void MD_Menu::handleInput(bool bNew)
 
       switch (me->action)
       {
-      case INP_LIST:  ended = processList(NAV_NULL, me, mi->action == MNU_INPUT_FB);            break;
-      case INP_BOOL:  ended = processBool(NAV_NULL, me, mi->action == MNU_INPUT_FB);            break;
-      case INP_INT:   ended = processInt(NAV_NULL, me, mi->action == MNU_INPUT_FB, incDelta);   break;
-      case INP_FLOAT: ended = processFloat(NAV_NULL, me, mi->action == MNU_INPUT_FB, incDelta); break;
-      case INP_ENGU:  ended = processEng(NAV_NULL, me, mi->action == MNU_INPUT_FB, incDelta);   break;
-      case INP_RUN:   ended = processRun(NAV_NULL, me, mi->action == MNU_INPUT_FB);             break;
-      case INP_EXT:   ended = processExt(NAV_NULL, me, true, mi->action == MNU_INPUT_FB);       break;
+      case INP_LIST:    ended = processList(NAV_NULL, me, mi->action == MNU_INPUT_FB, true);      break;
+      case INP_DYNLIST: ended = processList(NAV_NULL, me, mi->action == MNU_INPUT_FB, false);     break;
+      case INP_BOOL:    ended = processBool(NAV_NULL, me, mi->action == MNU_INPUT_FB);            break;
+      case INP_INT:     ended = processInt(NAV_NULL, me, mi->action == MNU_INPUT_FB, incDelta);   break;
+      case INP_FLOAT:   ended = processFloat(NAV_NULL, me, mi->action == MNU_INPUT_FB, incDelta); break;
+      case INP_ENGU:    ended = processEng(NAV_NULL, me, mi->action == MNU_INPUT_FB, incDelta);   break;
+      case INP_RUN:     ended = processRun(NAV_NULL, me, mi->action == MNU_INPUT_FB);             break;
+      case INP_EXT:     ended = processExt(NAV_NULL, me, true, mi->action == MNU_INPUT_FB);       break;
       }
     }
   }
@@ -839,14 +851,15 @@ void MD_Menu::handleInput(bool bNew)
 
       switch (me->action)
       {
-      case INP_LIST:  ended = processList(nav, me, mi->action == MNU_INPUT_FB);            break;
-      case INP_BOOL:  ended = processBool(nav, me, mi->action == MNU_INPUT_FB);            break;
-      case INP_INT:   ended = processInt(nav, me, mi->action == MNU_INPUT_FB, incDelta);   break;
-      case INP_FLOAT: ended = processFloat(nav, me, mi->action == MNU_INPUT_FB, incDelta); break;
-      case INP_ENGU:  ended = processEng(nav, me, mi->action == MNU_INPUT_FB, incDelta);   break;
-      case INP_RUN:   ended = processRun(nav, me, mi->action == MNU_INPUT_FB);             break;
-      case INP_EXT:   ended = processExt(nav, me, false, mi->action == MNU_INPUT_FB);      break;
-      }
+      case INP_LIST:    ended = processList(nav, me, mi->action == MNU_INPUT_FB, true);        break;
+      case INP_DYNLIST: ended = processList(nav, me, mi->action == MNU_INPUT_FB, false);       break;
+      case INP_BOOL:    ended = processBool(nav, me, mi->action == MNU_INPUT_FB);              break;
+      case INP_INT:     ended = processInt(nav, me, mi->action == MNU_INPUT_FB, incDelta);     break;
+      case INP_FLOAT:   ended = processFloat(nav, me, mi->action == MNU_INPUT_FB, incDelta);   break;
+      case INP_ENGU:    ended = processEng(nav, me, mi->action == MNU_INPUT_FB, incDelta);     break;
+      case INP_RUN:     ended = processRun(nav, me, mi->action == MNU_INPUT_FB);               break;
+      case INP_EXT:     ended = processExt(nav, me, false, mi->action == MNU_INPUT_FB);        break;
+      }  
     }
   }
 
