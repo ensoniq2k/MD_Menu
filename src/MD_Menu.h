@@ -382,7 +382,8 @@ public:
   {
     REQ_SET = 0,   ///< Value has been confirmed, it can be applied
     REQ_GET = 1,   ///< Request for the value to be processed
-    REQ_FB = 2     ///< Realtime feedback, value is not confirmed yet
+    REQ_UPD = 2,   ///< Realtime feedback, value is not confirmed yet
+    REQ_ESC = 3,   ///< Notification that the user left the menu item with ESC
   };
 
   /**

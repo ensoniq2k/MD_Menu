@@ -137,7 +137,7 @@ MD_Menu::value_t *mnuListValueRqst(MD_Menu::mnuId_t id, MD_Menu::requestType_t r
     else if(reqType == MD_Menu::REQ_SET) {
       fruit = valueBuffer.value;
     }
-    else if(MD_Menu::REQ_FB) {
+    else if(MD_Menu::REQ_UPD) {
       Serial.print(F("\nList index changed to "));
       Serial.print(valueBuffer.value);
     }
@@ -161,7 +161,7 @@ MD_Menu::value_t *mnuBoolValueRqst(MD_Menu::mnuId_t id, MD_Menu::requestType_t r
     else if(reqType == MD_Menu::REQ_SET) {
       bValue = valueBuffer.value;
     }
-    else if(MD_Menu::REQ_FB) {
+    else if(MD_Menu::REQ_UPD) {
       Serial.print(F("\nBoolean changed to "));
       Serial.print(valueBuffer.value);
     }
@@ -187,7 +187,7 @@ MD_Menu::value_t *mnuIntValueRqst(MD_Menu::mnuId_t id, MD_Menu::requestType_t re
       {
         int8Value = valueBuffer.value;
       }    
-      else if(MD_Menu::REQ_FB) {
+      else if(MD_Menu::REQ_UPD) {
         Serial.print(F("\nInt8 value changed to "));
         Serial.print(valueBuffer.value);
       }
@@ -201,7 +201,7 @@ MD_Menu::value_t *mnuIntValueRqst(MD_Menu::mnuId_t id, MD_Menu::requestType_t re
       else if (reqType == MD_Menu::REQ_SET) {
         int16Value = valueBuffer.value;
       }      
-      else if(MD_Menu::REQ_FB) {
+      else if(MD_Menu::REQ_UPD) {
         Serial.print(F("\nInt16 value changed to "));
         Serial.print(valueBuffer.value);
       }
@@ -215,7 +215,7 @@ MD_Menu::value_t *mnuIntValueRqst(MD_Menu::mnuId_t id, MD_Menu::requestType_t re
         int32Value = valueBuffer.value;
         Serial.print(int32Value);
       }
-      else if(MD_Menu::REQ_FB) {
+      else if(MD_Menu::REQ_UPD) {
         Serial.print(F("\nInt32 value changed to "));
         Serial.print(valueBuffer.value);
       }

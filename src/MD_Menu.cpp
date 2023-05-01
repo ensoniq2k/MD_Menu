@@ -285,7 +285,8 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, bool
     break;
 
   case NAV_ESC:
-    // do nothing except stop compiler warnings
+    mInp->cbVR(mInp->id, REQ_ESC);
+    endFlag = true;
     break;
   }
 
@@ -307,7 +308,7 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, bool
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_FB);
+      mInp->cbVR(mInp->id, REQ_UPD);
     }
   }
 
@@ -353,7 +354,8 @@ bool MD_Menu::processBool(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     break;
 
   case NAV_ESC:
-    // do nothing except stop compiler warnings
+    mInp->cbVR(mInp->id, REQ_ESC);
+    endFlag = true;
     break;
   }
 
@@ -371,7 +373,7 @@ bool MD_Menu::processBool(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_FB);
+      mInp->cbVR(mInp->id, REQ_UPD);
     }
   }
 
@@ -464,7 +466,8 @@ bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
     break;
 
   case NAV_ESC:
-    // do nothing except stop compiler warnings
+    mInp->cbVR(mInp->id, REQ_ESC);
+    endFlag = true;
     break;
   }
 
@@ -482,7 +485,7 @@ bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_FB);
+      mInp->cbVR(mInp->id, REQ_UPD);
     }
   }
 
@@ -542,7 +545,8 @@ bool MD_Menu::processFloat(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uin
     break;
 
   case NAV_ESC:
-    // do nothing except stop compiler warnings
+    mInp->cbVR(mInp->id, REQ_ESC);
+    endFlag = true;
     break;
   }
 
@@ -568,7 +572,7 @@ bool MD_Menu::processFloat(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uin
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_FB);
+      mInp->cbVR(mInp->id, REQ_UPD);
     }
   }
 
@@ -667,7 +671,8 @@ bool MD_Menu::processEng(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
     break;
 
   case NAV_ESC:
-    // do nothing except stop compiler warnings
+    mInp->cbVR(mInp->id, REQ_ESC);
+    endFlag = true;
     break;
   }
 
@@ -702,7 +707,7 @@ bool MD_Menu::processEng(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_FB);
+      mInp->cbVR(mInp->id, REQ_UPD);
     }
   }
 
@@ -796,7 +801,7 @@ bool MD_Menu::processExt(userNavAction_t nav, mnuInput_t* mInp, bool init, bool 
     if (rtfb)
     {
       _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_FB);
+      mInp->cbVR(mInp->id, REQ_UPD);
     }
   }
 
@@ -842,11 +847,9 @@ void MD_Menu::handleInput(bool bNew)
     mi = loadItem(_mnuStack[_currMenu].idItmCurr);
     me = loadInput(mi->actionId);
 
-    if (nav == NAV_ESC)
-      ended = true;
-    else if (nav != NAV_NULL || me->action == INP_EXT)    /// INP_EXT does not use main nav input!
+    if (nav != NAV_NULL || me->action == INP_EXT)    /// INP_EXT does not use main nav input!
     {
-      if (nav != NAV_NULL)  // for INP_EXT we need to set this in processExt()
+      if (nav != NAV_NULL && nav != NAV_ESC)  // for INP_EXT we need to set this in processExt()
         timerStart();
 
       switch (me->action)
@@ -862,6 +865,7 @@ void MD_Menu::handleInput(bool bNew)
       }  
     }
   }
+  
 
   if (ended)
   {
@@ -958,7 +962,7 @@ void MD_Menu::handleMenu(bool bNew)
         CLEAR_FLAG(F_INMENU);
       }
       else
-      {
+      {        
         _currMenu--;
         handleMenu(true);  // just one level of recursion;
       }
