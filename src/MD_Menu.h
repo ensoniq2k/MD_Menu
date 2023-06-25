@@ -580,6 +580,18 @@ public:
   void setAutoStart(bool bSet);
 
   /**
+  * Set the menu item integer wrap option.
+  *
+  * Set the menu item integer wrap option on or off. When set on, reaching the end 
+  * of the menu will wrap around to the start of the menu. Similarly, 
+  * reaching the end will restart from the beginning.
+  * Default is set to wrap.
+  *
+  * \param bSet true to set the option, false to un-set the option (default)
+  */
+  void setMenuItemIntWrap(bool bSet);
+
+  /**
   * Set the menu inactivity timeout.
   *
   * Set the menu inactivity timeout to the specified value in milliseconds.

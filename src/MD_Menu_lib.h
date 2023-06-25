@@ -100,4 +100,5 @@ const uint8_t ENGU_RANGE = 18;       ///< Symmetrical range of power prefixes fr
 #define F_INEDIT 1    ///< Flag currently editing a value
 #define F_MENUWRAP 2  ///< Flag to wrap around ends of menu and list selections
 #define F_AUTOSTART 3 ///< Flag auto start the menu system on SEL
+#define F_MENUITEMINTWRAP 4  ///< Flag to wrap around ends of integer menu items
 

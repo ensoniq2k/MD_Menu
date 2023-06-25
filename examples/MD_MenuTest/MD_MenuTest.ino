@@ -509,6 +509,7 @@ void setup(void)
   MainMenu.begin();
   MainMenu.setMenuWrap(true);
   MainMenu.setAutoStart(AUTO_START);
+  MainMenu.setMenuItemIntWrap(true);
   MainMenu.setTimeout(MENU_TIMEOUT);
 }
 

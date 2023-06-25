@@ -46,6 +46,7 @@ bool MD_Menu::isInMenu(void) { return(TEST_FLAG(F_INMENU)); };
 bool MD_Menu::isInEdit(void) { return(TEST_FLAG(F_INEDIT)); };
 void MD_Menu::setMenuWrap(bool bSet)  { if (bSet) { SET_FLAG(F_MENUWRAP); } else { CLEAR_FLAG(F_MENUWRAP); } };
 void MD_Menu::setAutoStart(bool bSet) { if (bSet) { SET_FLAG(F_AUTOSTART); } else { CLEAR_FLAG(F_AUTOSTART); } };
+void MD_Menu::setMenuItemIntWrap(bool bSet)  { if (bSet) { SET_FLAG(F_MENUITEMINTWRAP); } else { CLEAR_FLAG(F_MENUITEMINTWRAP); } };
 void MD_Menu::setTimeout(uint32_t t) { _timeout = t; };
 
 void MD_Menu::timerStart(void)
@@ -446,7 +447,7 @@ bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
   case NAV_INC:
     if (_V.value + incDelta <= mInp->range[1].value)
       _V.value += incDelta;
-    else
+    else if(TEST_FLAG(F_MENUITEMINTWRAP))
       _V.value = mInp->range[0].value;    // wrap around to min value
     update = true;
     break;
@@ -454,7 +455,7 @@ bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
   case NAV_DEC:
     if (_V.value - incDelta >= mInp->range[0].value)
       _V.value -= incDelta;
-    else
+    else if(TEST_FLAG(F_MENUITEMINTWRAP))
       _V.value = mInp->range[1].value;    // wrap around to max value
     update = true;
     break;
