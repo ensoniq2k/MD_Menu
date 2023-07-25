@@ -293,6 +293,15 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, bool
 
   if (update)
   {
+    // real time feedback needed
+    if (rtfb)
+    {
+      _pValue->value = _V.value;
+      mInp->cbVR(mInp->id, REQ_UPD);
+      //writing the value back enables us to have range checks in custom code
+      _V.value = _pValue->value; 
+    }
+
     char szItem[mInp->fieldWidth + 1];
     char sz[INP_PRE_SIZE(mInp) + sizeof(szItem) + INP_POST_SIZE(mInp) + 1];
 
@@ -304,13 +313,6 @@ bool MD_Menu::processList(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, bool
     strPostamble(sz, mInp);
 
     _cbDisp(DISP_L1, sz);
-
-    // real time feedback needed
-    if (rtfb)
-    {
-      _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_UPD);
-    }
   }
 
   return(endFlag);
@@ -362,6 +364,15 @@ bool MD_Menu::processBool(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
 
   if (update)
   {
+    // real time feedback needed
+    if (rtfb)
+    {
+      _pValue->value = _V.value;
+      mInp->cbVR(mInp->id, REQ_UPD);
+      //writing the value back enables us to have range checks in custom code
+      _V.value = _pValue->value; 
+    }
+    
     char sz[INP_PRE_SIZE(mInp) + strlen(INP_BOOL_T) + INP_POST_SIZE(mInp) + 1];
 
     strPreamble(sz, mInp);
@@ -369,19 +380,12 @@ bool MD_Menu::processBool(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     strPostamble(sz, mInp);
 
     _cbDisp(DISP_L1, sz);
-
-    // real time feedback needed
-    if (rtfb)
-    {
-      _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_UPD);
-    }
   }
 
   return(endFlag);
 }
 
-char *MD_Menu::ltostr(char *buf, uint8_t bufLen, int32_t v, uint8_t base, bool sign, bool leadZero)
+char *MD_Menu::longToStr(char *buf, uint8_t bufLen, int32_t v, uint8_t base, bool sign, bool leadZero)
 // Convert a long to a string right justified with leading spaces
 // in the base specified (up to 16).
 {
@@ -416,6 +420,67 @@ char *MD_Menu::ltostr(char *buf, uint8_t bufLen, int32_t v, uint8_t base, bool s
       *ptr = INP_NUMERIC_OFLOW;
 
   return(buf);
+}
+
+char *MD_Menu::timeToStr(char* buf, uint8_t bufLen, int32_t value, mnuTimeEditPosition_t visibleFields, mnuTimeEditPosition_t currentPosition) 
+{
+  if (buf == nullptr) return(nullptr);
+  uint8_t days, hours, minutes, seconds;
+
+  value = 2344523;
+
+  days = value / SECONDS_PER_DAY;
+  value = value % SECONDS_PER_DAY;
+
+  hours = value / SECONDS_PER_HOUR;
+  value = value % SECONDS_PER_HOUR;
+
+  minutes = value / SECONDS_PER_MINUTE;
+  seconds = value % SECONDS_PER_MINUTE;
+
+  char pattern[22];
+  char *pointer = pattern;
+
+  if(currentPosition == TEP_DAYS) {
+    strcpy(pointer, ">%03ud ");
+    pointer += strlen(">%03ud ");
+  }
+  else {
+    strcpy(pointer, "%03ud ");
+    pointer += strlen("%03ud ");
+  }
+
+  if(currentPosition == TEP_HOURS) {
+    strcpy(pointer, ">%02u:");
+    pointer += strlen(">%02u:");
+  }
+  else {
+    strcpy(pointer, "%02u:");
+    pointer += strlen("%02u:");
+  }
+
+  if(currentPosition == TEP_MINUTES) {
+    strcpy(pointer, ">%02u:");
+    pointer += strlen(">%02u:");
+  }
+  else {
+    strcpy(pointer, "%02u:");
+    pointer += strlen("%02u:");
+  }
+
+  if(currentPosition == TEP_SECONDS) {
+    strcpy(pointer, ">%02u");
+    pointer += strlen(">%02u");
+  }
+  else {
+    strcpy(pointer, "%02u");
+    pointer += strlen("%02u");
+  }
+
+  *pointer = '\0';
+
+  sprintf(buf, pattern, days, hours, minutes, days);
+  return buf;
 }
 
 bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint16_t incDelta)
@@ -474,20 +539,116 @@ bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
 
   if (update)
   {
-    char sz[INP_PRE_SIZE(mInp) + mInp->fieldWidth + INP_POST_SIZE(mInp) + 1];
-
-    strPreamble(sz, mInp);
-    ltostr(sz + strlen(sz), mInp->fieldWidth + 1, _V.value, mInp->base, (_V.value < 0));
-    strPostamble(sz, mInp);
-
-    _cbDisp(DISP_L1, sz);
-
     // real time feedback needed
     if (rtfb)
     {
       _pValue->value = _V.value;
       mInp->cbVR(mInp->id, REQ_UPD);
+      //writing the value back enables us to have range checks in custom code
+      _V.value = _pValue->value; 
     }
+
+    char sz[INP_PRE_SIZE(mInp) + mInp->fieldWidth + INP_POST_SIZE(mInp) + 1];
+
+    strPreamble(sz, mInp);
+    longToStr(sz + strlen(sz), mInp->fieldWidth + 1, _V.value, mInp->base, (_V.value < 0));
+    strPostamble(sz, mInp);
+
+    _cbDisp(DISP_L1, sz);
+  }
+
+  return(endFlag);
+}
+
+bool MD_Menu::processTime(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
+// Processing for Integer (all sizes) value input
+// Return true when the edit cycle is completed
+{
+  bool endFlag = false;
+  bool update = false;
+
+  switch (nav)
+  {
+  case NAV_NULL:    // this is to initialize the CB_DISP
+    {
+      _pValue = mInp->cbVR(mInp->id, REQ_GET);
+
+      if (_pValue == nullptr)
+      {
+        MD_PRINTS("\nInt cbVR(GET) == NULL!");
+        endFlag = true;
+      }
+      else
+      {
+        _V.value = _pValue->value;
+        _timeEditPosition = TEP_SECONDS;
+        update = true;
+      }
+    }
+    break;
+
+  case NAV_INC:
+    if (_V.value + 1 <= mInp->range[1].value)
+      _V.value += 1;
+    else
+      _V.value = mInp->range[0].value;    // wrap around to min value
+    update = true;
+    break;
+
+  case NAV_DEC:
+    if (_V.value - 1 >= mInp->range[0].value)
+      _V.value -= 1;
+    else 
+      _V.value = mInp->range[1].value;    // wrap around to max value
+    update = true;
+    break;
+
+  case NAV_SEL:
+    // If we reached the last field another press of select means we save and leave
+    if(_timeEditPosition >= mInp->fieldWidth) 
+    {
+      _pValue->value = _V.value;
+      mInp->cbVR(mInp->id, REQ_SET);
+      endFlag = true;
+      break;
+    }
+    else 
+    {
+      _timeEditPosition = (mnuTimeEditPosition_t)(_timeEditPosition + 1);
+      update = true;
+      break;
+    }
+
+  case NAV_ESC:
+    if(_timeEditPosition <= TEP_SECONDS)
+    {
+      mInp->cbVR(mInp->id, REQ_ESC);
+      endFlag = true;
+      break;
+    }
+    else 
+    {
+      _timeEditPosition = (mnuTimeEditPosition_t)(_timeEditPosition - 1);
+      update = true;
+      break;
+    }
+  }
+
+  if (update)
+  {
+    // real time feedback needed
+    if (rtfb)
+    {
+      _pValue->value = _V.value;
+      mInp->cbVR(mInp->id, REQ_UPD);
+      //writing the value back enables us to have range checks in custom code
+      _V.value = _pValue->value;
+    }
+
+    char text[HEADER_LABEL_SIZE];
+    timeToStr(text, _V.value, HEADER_LABEL_SIZE, (mnuTimeEditPosition_t)mInp->fieldWidth, _timeEditPosition);
+
+    _cbDisp(DISP_L1, text);
   }
 
   return(endFlag);
@@ -553,6 +714,15 @@ bool MD_Menu::processFloat(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uin
 
   if (update)
   {
+    // real time feedback needed
+    if (rtfb)
+    {
+      _pValue->value = _V.value;
+      mInp->cbVR(mInp->id, REQ_UPD);
+      //writing the value back enables us to have range checks in custom code
+      _V.value = _pValue->value; 
+    }
+    
     uint16_t divisor = 1;
     char sz[INP_PRE_SIZE(mInp) + mInp->fieldWidth + INP_POST_SIZE(mInp) + 1];
 
@@ -560,21 +730,14 @@ bool MD_Menu::processFloat(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uin
       divisor *= 10;
 
     strPreamble(sz, mInp);
-    ltostr(sz + strlen(sz), mInp->fieldWidth - (FLOAT_DECIMALS + 1) + 1, _V.value / divisor, 10, (_V.value < 0));
+    longToStr(sz + strlen(sz), mInp->fieldWidth - (FLOAT_DECIMALS + 1) + 1, _V.value / divisor, 10, (_V.value < 0));
     sz[strlen(sz) + 1] = '\0';
     sz[strlen(sz)] = DECIMAL_POINT;
-    ltostr(sz + strlen(sz), (FLOAT_DECIMALS + 1), abs(_V.value % divisor), 10, false, true);
+    longToStr(sz + strlen(sz), (FLOAT_DECIMALS + 1), abs(_V.value % divisor), 10, false, true);
 
     strPostamble(sz, mInp);
 
     _cbDisp(DISP_L1, sz);
-
-    // real time feedback needed
-    if (rtfb)
-    {
-      _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_UPD);
-    }
   }
 
   return(endFlag);
@@ -679,6 +842,15 @@ bool MD_Menu::processEng(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
 
   if (update)
   {
+    // real time feedback needed
+    if (rtfb)
+    {
+      _pValue->value = _V.value;
+      mInp->cbVR(mInp->id, REQ_UPD);
+      //writing the value back enables us to have range checks in custom code
+      _V.value = _pValue->value; 
+    }
+    
     // The decimal units prefix are fitted to stay between 10^-ENGU_RANGE and 10^ENGU_RANGE 
     // as a symmetrical range. prefixes are atto(10^-18), femto(-15), pico(-12), nano(-9),
     // micro(-6), milli(-3), blank(0), kilo(3), Mega(6), Giga(9), Tera(12), Peta(15), Exa(18).
@@ -692,10 +864,10 @@ bool MD_Menu::processEng(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
       divisor *= 10;
 
     strPreamble(sz, mInp);
-    ltostr(sz + strlen(sz), mInp->fieldWidth - (ENGU_DECIMALS + 1) + 1, _V.value / divisor, 10, (_V.value < 0));
+    longToStr(sz + strlen(sz), mInp->fieldWidth - (ENGU_DECIMALS + 1) + 1, _V.value / divisor, 10, (_V.value < 0));
     sz[strlen(sz) + 1] = '\0';
     sz[strlen(sz)] = DECIMAL_POINT;
-    ltostr(sz + strlen(sz), (ENGU_DECIMALS + 1), abs(_V.value % divisor), 10, false, true);
+    longToStr(sz + strlen(sz), (ENGU_DECIMALS + 1), abs(_V.value % divisor), 10, false, true);
 
     strPostamble(sz, mInp);
     sz[strlen(sz) + 1] = '\0';
@@ -703,13 +875,6 @@ bool MD_Menu::processEng(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
     strcat_P(sz, mInp->pList);
 
     _cbDisp(DISP_L1, sz);
-
-    // real time feedback needed
-    if (rtfb)
-    {
-      _pValue->value = _V.value;
-      mInp->cbVR(mInp->id, REQ_UPD);
-    }
   }
 
   return(endFlag);
@@ -790,20 +955,22 @@ bool MD_Menu::processExt(userNavAction_t nav, mnuInput_t* mInp, bool init, bool 
 
   if (update || init)
   {
-    char sz[INP_PRE_SIZE(mInp) + mInp->fieldWidth + INP_POST_SIZE(mInp) + 1];
-
-    strPreamble(sz, mInp);
-    ltostr(sz + strlen(sz), mInp->fieldWidth + 1, _V.value, mInp->base, (_V.value < 0));
-    strPostamble(sz, mInp);
-
-    _cbDisp(DISP_L1, sz);
-
     // real time feedback needed
     if (rtfb)
     {
       _pValue->value = _V.value;
       mInp->cbVR(mInp->id, REQ_UPD);
+      //writing the value back enables us to have range checks in custom code
+      _V.value = _pValue->value; 
     }
+    
+    char sz[INP_PRE_SIZE(mInp) + mInp->fieldWidth + INP_POST_SIZE(mInp) + 1];
+
+    strPreamble(sz, mInp);
+    longToStr(sz + strlen(sz), mInp->fieldWidth + 1, _V.value, mInp->base, (_V.value < 0));
+    strPostamble(sz, mInp);
+
+    _cbDisp(DISP_L1, sz);
   }
 
   return(endFlag);
@@ -831,14 +998,15 @@ void MD_Menu::handleInput(bool bNew)
 
       switch (me->action)
       {
-      case INP_LIST:    ended = processList(NAV_NULL, me, mi->action == MNU_INPUT_FB, true);      break;
-      case INP_DYNLIST: ended = processList(NAV_NULL, me, mi->action == MNU_INPUT_FB, false);     break;
-      case INP_BOOL:    ended = processBool(NAV_NULL, me, mi->action == MNU_INPUT_FB);            break;
-      case INP_INT:     ended = processInt(NAV_NULL, me, mi->action == MNU_INPUT_FB, incDelta);   break;
-      case INP_FLOAT:   ended = processFloat(NAV_NULL, me, mi->action == MNU_INPUT_FB, incDelta); break;
-      case INP_ENGU:    ended = processEng(NAV_NULL, me, mi->action == MNU_INPUT_FB, incDelta);   break;
-      case INP_RUN:     ended = processRun(NAV_NULL, me, mi->action == MNU_INPUT_FB);             break;
-      case INP_EXT:     ended = processExt(NAV_NULL, me, true, mi->action == MNU_INPUT_FB);       break;
+      case INP_LIST:    ended = processList(  NAV_NULL, me,       mi->action == MNU_INPUT_FB, true);     break;
+      case INP_DYNLIST: ended = processList(  NAV_NULL, me,       mi->action == MNU_INPUT_FB, false);    break;
+      case INP_BOOL:    ended = processBool(  NAV_NULL, me,       mi->action == MNU_INPUT_FB);           break;
+      case INP_INT:     ended = processInt(   NAV_NULL, me,       mi->action == MNU_INPUT_FB, incDelta); break;
+      case INP_FLOAT:   ended = processFloat( NAV_NULL, me,       mi->action == MNU_INPUT_FB, incDelta); break;
+      case INP_ENGU:    ended = processEng(   NAV_NULL, me,       mi->action == MNU_INPUT_FB, incDelta); break;
+      case INP_TIME:    ended = processTime(  NAV_NULL, me,       mi->action == MNU_INPUT_FB);           break;
+      case INP_RUN:     ended = processRun(   NAV_NULL, me,       mi->action == MNU_INPUT_FB);           break;
+      case INP_EXT:     ended = processExt(   NAV_NULL, me, true, mi->action == MNU_INPUT_FB);           break;
       }
     }
   }
@@ -855,14 +1023,15 @@ void MD_Menu::handleInput(bool bNew)
 
       switch (me->action)
       {
-      case INP_LIST:    ended = processList(nav, me, mi->action == MNU_INPUT_FB, true);        break;
-      case INP_DYNLIST: ended = processList(nav, me, mi->action == MNU_INPUT_FB, false);       break;
-      case INP_BOOL:    ended = processBool(nav, me, mi->action == MNU_INPUT_FB);              break;
-      case INP_INT:     ended = processInt(nav, me, mi->action == MNU_INPUT_FB, incDelta);     break;
-      case INP_FLOAT:   ended = processFloat(nav, me, mi->action == MNU_INPUT_FB, incDelta);   break;
-      case INP_ENGU:    ended = processEng(nav, me, mi->action == MNU_INPUT_FB, incDelta);     break;
-      case INP_RUN:     ended = processRun(nav, me, mi->action == MNU_INPUT_FB);               break;
-      case INP_EXT:     ended = processExt(nav, me, false, mi->action == MNU_INPUT_FB);        break;
+      case INP_LIST:    ended = processList(  nav, me,        mi->action == MNU_INPUT_FB, true);     break;
+      case INP_DYNLIST: ended = processList(  nav, me,        mi->action == MNU_INPUT_FB, false);    break;
+      case INP_BOOL:    ended = processBool(  nav, me,        mi->action == MNU_INPUT_FB);           break;
+      case INP_INT:     ended = processInt(   nav, me,        mi->action == MNU_INPUT_FB, incDelta); break;
+      case INP_FLOAT:   ended = processFloat( nav, me,        mi->action == MNU_INPUT_FB, incDelta); break;
+      case INP_ENGU:    ended = processEng(   nav, me,        mi->action == MNU_INPUT_FB, incDelta); break;
+      case INP_TIME:    ended = processTime(  nav, me,        mi->action == MNU_INPUT_FB);           break;
+      case INP_RUN:     ended = processRun(   nav, me,        mi->action == MNU_INPUT_FB);           break;
+      case INP_EXT:     ended = processExt(   nav, me, false, mi->action == MNU_INPUT_FB);           break;
       }  
     }
   }

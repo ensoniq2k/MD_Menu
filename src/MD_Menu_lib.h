@@ -102,3 +102,6 @@ const uint8_t ENGU_RANGE = 18;       ///< Symmetrical range of power prefixes fr
 #define F_AUTOSTART 3 ///< Flag auto start the menu system on SEL
 #define F_MENUITEMINTWRAP 4  ///< Flag to wrap around ends of integer menu items
 
+#define SECONDS_PER_DAY    86400
+#define SECONDS_PER_HOUR   3600
+#define SECONDS_PER_MINUTE 60

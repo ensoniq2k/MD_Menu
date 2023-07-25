@@ -353,6 +353,7 @@ public:
     INP_INT,      ///< The item is for input of an integer
     INP_FLOAT,    ///< The item is for input of a real number representation with 2 decimal digits 
     INP_ENGU,     ///< The item is for input of a number in engineering (powers of 10 which are multiples of 3) with 3 decimal digits.
+    INP_TIME,     ///< The item is for input of time (i.e. 15:10:05) while every digit can be set separately
     INP_RUN,      ///< The item will run a user function
     INP_EXT,      ///< The item will display numeric input provided by a user function
   };
@@ -442,6 +443,40 @@ public:
     char    label[ITEM_LABEL_SIZE + 1]; ///< Label for this menu item
     mnuAction_t action;    ///< Selecting this item does this action
     mnuId_t actionId;      ///< Associated menu or input field Id
+  };
+
+  /**
+  * Menu input type enumerated type specification.
+  *
+  * Used for time input fields to easily define the setable values.
+  * Using TIM_MIN as minimum and TIM_24H as maximum means 
+  * only hours and minutes can be edited for example
+  */
+  enum mnuTimeRanges_t
+  {
+    TIM_SEC = 0,        ///< Time can be set in seconds
+    TIM_MIN = 60,       ///< Time can be set in minutes
+    TIM_HOUR = 3600,    ///< Time can be set in hours
+    TIM_DAY = 86400,    ///< Time can be set up to 24hours
+    TIM_48H = 172800,   ///< Time can be set up to 48hours
+    TIM_72H = 259200,   ///< Time can be set up to 72hours
+    TIM_30D = 2592000,  ///< Time can be set up to 30 days
+    TIM365D = 31536000, ///< Time can be set up to 365 days
+  };
+
+    /**
+  * Menu input type enumerated type specification.
+  *
+  * Used for time input fields to easily define the upper limit.
+  * Values could also be put in as hard coded numbers
+  */
+  enum mnuTimeEditPosition_t
+  {
+    TEP_NONE = 0,     ///< Current position of time edit is the seconds field
+    TEP_SECONDS = 1,  ///< Current position of time edit is the seconds field
+    TEP_MINUTES = 2,  ///< Current position of time edit is the minutes field
+    TEP_HOURS = 3,    ///< Current position of time edit is the hours field
+    TEP_DAYS = 4,     ///< Current position of time edit is the days field
   };
 
   /**
@@ -671,7 +706,8 @@ private:
   uint32_t _timeout;      ///< Menu inactivity timeout in milliseconds
 
   // Status values and global flags
-  uint8_t _options;       ///< bit field for options and flags
+  uint8_t _options;      ///< bit field for options and flags
+  mnuTimeEditPosition_t _timeEditPosition;  ///< the current position in a time field (day, hour, minute, second)
 
   // Input editing buffers
   value_t *_pValue;  ///< Pointer to the user provided data buffer
@@ -689,8 +725,9 @@ private:
   mnuInput_t *loadInput(mnuId_t id);      ///< find the input item with the specified ID
   void       strPreamble(char *psz, mnuInput_t *mInp);  ///< format a preamble to the a variable display
   void       strPostamble(char *psz, mnuInput_t *mInp); ///< attach a postamble to a variable display
-  char       *ltostr(char* buf, uint8_t bufLen, int32_t v, uint8_t base, bool sign, bool leadZero = false); ///< convert long to string
-  
+  char       *longToStr(char* buf, uint8_t bufLen, int32_t v, uint8_t base, bool sign, bool leadZero = false); ///< convert long to string
+  char       *timeToStr(char* buffer, uint8_t bufLen, int32_t value, mnuTimeEditPosition_t visibleFields, mnuTimeEditPosition_t currentPosition); ///< convert time to string for edit
+
   void timerStart(void);    ///< Start (reset) the timeout timer
   void timerCheck(void);    ///< Check if timeout has expired and reset menu if it has
 
@@ -704,6 +741,7 @@ private:
   bool processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint16_t incDelta);
   bool processFloat(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint16_t incDelta);
   bool processEng(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint16_t incDelta);
+  bool processTime(userNavAction_t nav, mnuInput_t *mInp, bool rtfb);
   bool processRun(userNavAction_t nav, mnuInput_t *mInp, bool rtfb);
   bool processExt(userNavAction_t nav, mnuInput_t* mInp, bool init, bool rtfb);
 };
