@@ -472,7 +472,7 @@ public:
   */
   enum mnuTimeEditPosition_t
   {
-    TEP_NONE = 0,     ///< Current position of time edit is the seconds field
+    TEP_NONE = 0,     ///< Current position of time edit is nothing
     TEP_SECONDS = 1,  ///< Current position of time edit is the seconds field
     TEP_MINUTES = 2,  ///< Current position of time edit is the minutes field
     TEP_HOURS = 3,    ///< Current position of time edit is the hours field
@@ -726,7 +726,8 @@ private:
   void       strPreamble(char *psz, mnuInput_t *mInp);  ///< format a preamble to the a variable display
   void       strPostamble(char *psz, mnuInput_t *mInp); ///< attach a postamble to a variable display
   char       *longToStr(char* buf, uint8_t bufLen, int32_t v, uint8_t base, bool sign, bool leadZero = false); ///< convert long to string
-  char       *timeToStr(char* buffer, uint8_t bufLen, int32_t value, mnuTimeEditPosition_t visibleFields, mnuTimeEditPosition_t currentPosition); ///< convert time to string for edit
+  char       *timeToStr(char* buffer, int32_t value, mnuTimeEditPosition_t lowestField, mnuTimeEditPosition_t highestField, mnuTimeEditPosition_t currentPosition); ///< convert time to string for edit
+  int32_t   toSeconds(mnuTimeEditPosition_t type, uint8_t value); ///< convert a time value to seconds
 
   void timerStart(void);    ///< Start (reset) the timeout timer
   void timerCheck(void);    ///< Check if timeout has expired and reset menu if it has

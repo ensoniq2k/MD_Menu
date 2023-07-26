@@ -422,12 +422,10 @@ char *MD_Menu::longToStr(char *buf, uint8_t bufLen, int32_t v, uint8_t base, boo
   return(buf);
 }
 
-char *MD_Menu::timeToStr(char* buf, uint8_t bufLen, int32_t value, mnuTimeEditPosition_t visibleFields, mnuTimeEditPosition_t currentPosition) 
+char *MD_Menu::timeToStr(char* buf, int32_t value, mnuTimeEditPosition_t lowestField, mnuTimeEditPosition_t highestField, mnuTimeEditPosition_t currentPosition) 
 {
   if (buf == nullptr) return(nullptr);
   uint8_t days, hours, minutes, seconds;
-
-  value = 2344523;
 
   days = value / SECONDS_PER_DAY;
   value = value % SECONDS_PER_DAY;
@@ -440,47 +438,81 @@ char *MD_Menu::timeToStr(char* buf, uint8_t bufLen, int32_t value, mnuTimeEditPo
 
   char pattern[22];
   char *pointer = pattern;
+  uint16_t args[4];
+  uint8_t argsIndex = 0;
 
-  if(currentPosition == TEP_DAYS) {
-    strcpy(pointer, ">%03ud ");
-    pointer += strlen(">%03ud ");
-  }
-  else {
-    strcpy(pointer, "%03ud ");
-    pointer += strlen("%03ud ");
-  }
+  if(lowestField <= TEP_DAYS && highestField >= TEP_DAYS) 
+  {
+    if(currentPosition == TEP_DAYS) {
+      strcpy(pointer, ">%03ud ");
+      pointer += strlen(">%03ud ");
+    }
+    else {
+      strcpy(pointer, "%03ud ");
+      pointer += strlen("%03ud ");
+    }
 
-  if(currentPosition == TEP_HOURS) {
-    strcpy(pointer, ">%02u:");
-    pointer += strlen(">%02u:");
-  }
-  else {
-    strcpy(pointer, "%02u:");
-    pointer += strlen("%02u:");
+    args[argsIndex++] = days;
   }
 
-  if(currentPosition == TEP_MINUTES) {
-    strcpy(pointer, ">%02u:");
-    pointer += strlen(">%02u:");
-  }
-  else {
-    strcpy(pointer, "%02u:");
-    pointer += strlen("%02u:");
+  if(lowestField <= TEP_HOURS && highestField >= TEP_HOURS) 
+  {
+    if(currentPosition == TEP_HOURS) {
+      strcpy(pointer, ">%02u:");
+      pointer += strlen(">%02u:");
+    }
+    else {
+      strcpy(pointer, "%02u:");
+      pointer += strlen("%02u:");
+    }
+
+    args[argsIndex++] = hours;
   }
 
-  if(currentPosition == TEP_SECONDS) {
-    strcpy(pointer, ">%02u");
-    pointer += strlen(">%02u");
+  if(lowestField <= TEP_MINUTES && highestField >= TEP_MINUTES) 
+  {
+    if(currentPosition == TEP_MINUTES) {
+      strcpy(pointer, ">%02u:");
+      pointer += strlen(">%02u:");
+    }
+    else {
+      strcpy(pointer, "%02u:");
+      pointer += strlen("%02u:");
+    }
+
+    args[argsIndex++] = minutes;
   }
-  else {
-    strcpy(pointer, "%02u");
-    pointer += strlen("%02u");
+
+  if(lowestField <= TEP_SECONDS && highestField >= TEP_SECONDS) 
+  {
+    if(currentPosition == TEP_SECONDS) {
+      strcpy(pointer, ">%02u");
+      pointer += strlen(">%02u");
+    }
+    else {
+      strcpy(pointer, "%02u");
+      pointer += strlen("%02u");
+    }
+
+    args[argsIndex++] = seconds;
   }
 
   *pointer = '\0';
 
-  sprintf(buf, pattern, days, hours, minutes, days);
+  vsprintf(buf, pattern, days, hours, minutes, seconds);
   return buf;
+}
+
+int32_t MD_Menu::toSeconds(mnuTimeEditPosition_t type, uint8_t value) 
+{
+  switch(type) 
+  {
+    case TEP_SECONDS: return value;
+    case TEP_MINUTES: return value * TIM_MIN;
+    case TEP_HOURS:   return value * TIM_HOUR;
+    case TEP_DAYS:    return value * TIM_DAY;
+    default:          return 0;
+  }
 }
 
 bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint16_t incDelta)
@@ -565,7 +597,9 @@ bool MD_Menu::processTime(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
 // Return true when the edit cycle is completed
 {
   bool endFlag = false;
-  bool update = false;
+  bool update = true;
+
+  int32_t valInSeconds;
 
   switch (nav)
   {
@@ -576,60 +610,61 @@ bool MD_Menu::processTime(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
       if (_pValue == nullptr)
       {
         MD_PRINTS("\nInt cbVR(GET) == NULL!");
+        update = false;
         endFlag = true;
       }
       else
       {
         _V.value = _pValue->value;
-        _timeEditPosition = TEP_SECONDS;
-        update = true;
+        _timeEditPosition = (mnuTimeEditPosition_t)(mInp->range[0].power);
       }
+
     }
     break;
 
   case NAV_INC:
-    if (_V.value + 1 <= mInp->range[1].value)
-      _V.value += 1;
-    else
-      _V.value = mInp->range[0].value;    // wrap around to min value
-    update = true;
+    valInSeconds = toSeconds(_timeEditPosition, 1);
+    if (_V.value + valInSeconds <= mInp->range[1].value)
+    {
+      _V.value += valInSeconds;      
+    }
     break;
 
   case NAV_DEC:
-    if (_V.value - 1 >= mInp->range[0].value)
-      _V.value -= 1;
-    else 
-      _V.value = mInp->range[1].value;    // wrap around to max value
-    update = true;
+    valInSeconds = toSeconds(_timeEditPosition, 1);
+    if (_V.value - valInSeconds >= mInp->range[0].value)
+    {
+      _V.value -= valInSeconds;
+    }
     break;
 
   case NAV_SEL:
     // If we reached the last field another press of select means we save and leave
-    if(_timeEditPosition >= mInp->fieldWidth) 
+    if(_timeEditPosition >= mInp->range[1].power) 
     {
       _pValue->value = _V.value;
       mInp->cbVR(mInp->id, REQ_SET);
       endFlag = true;
+      update = false;
       break;
     }
     else 
     {
       _timeEditPosition = (mnuTimeEditPosition_t)(_timeEditPosition + 1);
-      update = true;
       break;
     }
 
   case NAV_ESC:
-    if(_timeEditPosition <= TEP_SECONDS)
+    if(_timeEditPosition <= mInp->range[0].power)
     {
       mInp->cbVR(mInp->id, REQ_ESC);
       endFlag = true;
+      update = false;
       break;
     }
     else 
     {
       _timeEditPosition = (mnuTimeEditPosition_t)(_timeEditPosition - 1);
-      update = true;
       break;
     }
   }
@@ -646,7 +681,7 @@ bool MD_Menu::processTime(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     }
 
     char text[HEADER_LABEL_SIZE];
-    timeToStr(text, _V.value, HEADER_LABEL_SIZE, (mnuTimeEditPosition_t)mInp->fieldWidth, _timeEditPosition);
+    timeToStr(text, _V.value, (mnuTimeEditPosition_t)mInp->range[0].power, (mnuTimeEditPosition_t)mInp->range[1].power, _timeEditPosition);
 
     _cbDisp(DISP_L1, text);
   }
