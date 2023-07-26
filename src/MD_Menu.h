@@ -445,25 +445,6 @@ public:
     mnuId_t actionId;      ///< Associated menu or input field Id
   };
 
-  /**
-  * Menu input type enumerated type specification.
-  *
-  * Used for time input fields to easily define the setable values.
-  * Using TIM_MIN as minimum and TIM_24H as maximum means 
-  * only hours and minutes can be edited for example
-  */
-  enum mnuTimeRanges_t
-  {
-    TIM_SEC = 0,        ///< Time can be set in seconds
-    TIM_MIN = 60,       ///< Time can be set in minutes
-    TIM_HOUR = 3600,    ///< Time can be set in hours
-    TIM_DAY = 86400,    ///< Time can be set up to 24hours
-    TIM_48H = 172800,   ///< Time can be set up to 48hours
-    TIM_72H = 259200,   ///< Time can be set up to 72hours
-    TIM_30D = 2592000,  ///< Time can be set up to 30 days
-    TIM365D = 31536000, ///< Time can be set up to 365 days
-  };
-
     /**
   * Menu input type enumerated type specification.
   *
