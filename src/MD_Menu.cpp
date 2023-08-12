@@ -436,10 +436,7 @@ char *MD_Menu::timeToStr(char* buf, int32_t value, mnuTimeEditPosition_t lowestF
   minutes = value / SECONDS_PER_MINUTE;
   seconds = value % SECONDS_PER_MINUTE;
 
-  //char pattern[22];
   char *pointer = buf;
-  //uint16_t args[4];
-  //uint8_t argsIndex = 0;
 
   if(lowestField <= TEP_DAYS && highestField >= TEP_DAYS) 
   {
@@ -484,17 +481,40 @@ char *MD_Menu::timeToStr(char* buf, int32_t value, mnuTimeEditPosition_t lowestF
   return buf;
 }
 
-int32_t MD_Menu::toSeconds(mnuTimeEditPosition_t type, uint8_t value) 
+uint32_t MD_Menu::intervalToSeconds(mnuTimeEditPosition_t type) 
 {
   switch(type) 
   {
-    case TEP_DAYS:    return value * SECONDS_PER_DAY;
-    case TEP_HOURS:   return value * SECONDS_PER_HOUR;
-    case TEP_MINUTES: return value * SECONDS_PER_MINUTE;
-    case TEP_SECONDS: return value;
+    case TEP_DAYS:    return SECONDS_PER_DAY;
+    case TEP_HOURS:   return SECONDS_PER_HOUR;
+    case TEP_MINUTES: return SECONDS_PER_MINUTE;
+    case TEP_SECONDS: return 1;
     default:          return 0;
   }
+}
 
+uint8_t MD_Menu::isolateTimeInterval(mnuTimeEditPosition_t type, uint32_t value)
+{
+  switch(type) 
+  {
+    case TEP_DAYS:    return value / SECONDS_PER_DAY;
+    case TEP_HOURS:   return value % SECONDS_PER_DAY / SECONDS_PER_HOUR;
+    case TEP_MINUTES: return value % SECONDS_PER_HOUR / SECONDS_PER_MINUTE;
+    case TEP_SECONDS: return value % SECONDS_PER_MINUTE;
+    default:          return 0;
+  }
+}
+
+bool MD_Menu::timeFieldIsMax(mnuTimeEditPosition_t type, uint8_t value) 
+{
+  switch(type) 
+  {
+    case TEP_DAYS:    return value >= 365;
+    case TEP_HOURS:   return value >= 23;
+    case TEP_MINUTES:
+    case TEP_SECONDS: return value >= 59;
+    default:          return 0;
+  }
 }
 
 bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint16_t incDelta)
@@ -575,13 +595,14 @@ bool MD_Menu::processInt(userNavAction_t nav, mnuInput_t *mInp, bool rtfb, uint1
 }
 
 bool MD_Menu::processTime(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
-// Processing for Integer (all sizes) value input
+// Processing for Time value input
 // Return true when the edit cycle is completed
 {
   bool endFlag = false;
   bool update = true;
 
-  int32_t valInSeconds;
+  uint32_t intervalSeconds;
+  uint8_t isolatedTimeValue = isolateTimeInterval(_timeEditPosition, _V.value);
 
   switch (nav)
   {
@@ -605,17 +626,21 @@ bool MD_Menu::processTime(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     break;
 
   case NAV_INC:
-    valInSeconds = toSeconds(_timeEditPosition, 1);
-    if (_V.value + valInSeconds <= mInp->range[1].value)
-      _V.value += valInSeconds;
+    intervalSeconds = intervalToSeconds(_timeEditPosition);
+    if(timeFieldIsMax(_timeEditPosition, isolatedTimeValue))
+      ; // Do nothing
+    else if (_V.value + intervalSeconds <= mInp->range[1].value)
+      _V.value += intervalSeconds;
     else
       _V.value = mInp->range[1].value;      
     break;
 
   case NAV_DEC:
-    valInSeconds = toSeconds(_timeEditPosition, 1);
-    if (_V.value - valInSeconds >= mInp->range[0].value)
-      _V.value -= valInSeconds;
+    intervalSeconds = intervalToSeconds(_timeEditPosition);
+    if(isolatedTimeValue <= 0)
+      ; // Do nothing
+    else if (_V.value - intervalSeconds >= mInp->range[0].value)
+      _V.value -= intervalSeconds;
     else 
       _V.value = mInp->range[0].value;
     break;
@@ -666,10 +691,21 @@ bool MD_Menu::processTime(userNavAction_t nav, mnuInput_t *mInp, bool rtfb)
     
     timeToStr(text, _V.value, (mnuTimeEditPosition_t)mInp->range[0].power, (mnuTimeEditPosition_t)mInp->range[1].power, _timeEditPosition);
     
+    char suffix[10] = "";
+
+    // If we don't show all digits we show the user what we are showing. Digit in function is the length of the string in "F()"
+    if(mInp->range[0].power == MD_Menu::TEP_SECONDS && mInp->range[1].power == MD_Menu::TEP_SECONDS)
+      memcpy_P(suffix, F(" seconds"), 8);
+    if(mInp->range[0].power == MD_Menu::TEP_MINUTES && mInp->range[1].power == MD_Menu::TEP_MINUTES)
+      memcpy_P(suffix, F(" minutes"), 8);
+    if(mInp->range[0].power == MD_Menu::TEP_HOURS && mInp->range[1].power == MD_Menu::TEP_DAYS)
+      memcpy_P(suffix, F(" hours"), 6);
     if(mInp->range[0].power == MD_Menu::TEP_SECONDS && mInp->range[1].power == MD_Menu::TEP_MINUTES)
-      strcat(text, " mm:ss");
-    if(mInp->range[0].power == MD_Menu::TEP_MINUTES && mInp->range[1].power == MD_Menu::TEP_HOURS)
-      strcat(text, " hh:mm");
+      memcpy_P(suffix, F(" mm:ss"), 6);
+    if(mInp->range[0].power == MD_Menu::TEP_MINUTES && mInp->range[1].power >= MD_Menu::TEP_HOURS)
+      memcpy_P(suffix, F(" hh:mm"), 6);
+
+    strcat(text, suffix);
     
     _cbDisp(DISP_L1, text);
   }

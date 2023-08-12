@@ -708,7 +708,9 @@ private:
   void       strPostamble(char *psz, mnuInput_t *mInp); ///< attach a postamble to a variable display
   char       *longToStr(char* buf, uint8_t bufLen, int32_t v, uint8_t base, bool sign, bool leadZero = false); ///< convert long to string
   char       *timeToStr(char* buffer, int32_t value, mnuTimeEditPosition_t lowestField, mnuTimeEditPosition_t highestField, mnuTimeEditPosition_t currentPosition); ///< convert time to string for edit
-  int32_t   toSeconds(mnuTimeEditPosition_t type, uint8_t value); ///< convert a time value to seconds
+  uint32_t    intervalToSeconds(mnuTimeEditPosition_t type); ///< returns the seconds a interval contains
+  uint8_t     isolateTimeInterval(mnuTimeEditPosition_t type, uint32_t value); ///< returns only the give type in an arbitrary seconds value (i.e. input 1833 seconds and get the value 30 for the minutes type)
+  bool        timeFieldIsMax(mnuTimeEditPosition_t type, uint8_t value); ///< checks if a time field reached its maximum value (i.e. 59 for minuts, 23 for hours, 365 for days)
 
   void timerStart(void);    ///< Start (reset) the timeout timer
   void timerCheck(void);    ///< Check if timeout has expired and reset menu if it has
