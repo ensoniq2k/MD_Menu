@@ -1,5 +1,11 @@
 # MD_Menu
 
+###I changed a few things and added a menu option for time based values since I needed that for my project.
+
+#####Find the original documentation below.
+
+
+
 [![arduino-library-badge](https://www.ardu-badge.com/badge/MD_Menu.svg?)](https://www.ardu-badge.com/MD_Menu)
 
 This is a menu management library created as a front end to set parameters in embedded hardware control applications, leaving the back end under application control. It is suitable for text based displays (eg, LCD modules) with 1 or 2 lines available for display.
@@ -16,6 +22,7 @@ The library allows user code to define:
   - Boolean (Y/N) values.
   - Pick List selection.
   - Signed integers.
+  - Time values (minutes, hours, days, seconds).
   - Decimal floating point.
   - Engineering units.
 
