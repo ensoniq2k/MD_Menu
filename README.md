@@ -2,6 +2,8 @@
 
 ### I changed a few things and added a menu option for time based values since I needed that for my project.
 
+This fork is hosted on GitHub: https://github.com/ensoniq2k/MD_Menu
+
 ##### Find the original documentation below.
 
 
@@ -25,7 +27,5 @@ The library allows user code to define:
   - Time values (minutes, hours, days, seconds).
   - Decimal floating point.
   - Engineering units.
-
-If you like and use this library please consider making a small donation using [PayPal](https://paypal.me/MajicDesigns/4USD)
 
 [Library Documentation](https://MajicDesigns.github.io/MD_Menu/)
